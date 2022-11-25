@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import java.util.List;
 
+/**
+ * version test
+ */
 @RestController
 @RequestMapping("/billboard")
 public class BmsBillboardController extends BaseController {
