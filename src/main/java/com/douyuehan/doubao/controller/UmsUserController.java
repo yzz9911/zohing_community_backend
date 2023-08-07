@@ -77,7 +77,22 @@ public class UmsUserController extends BaseController {
     }
     @PostMapping("/update")
     public ApiResult<UmsUser> updateUser(@RequestBody UmsUser umsUser) {
-        iUmsUserService.updateById(umsUser);
-        return ApiResult.success(umsUser);
+    	UmsUser userDb = iUmsUserService.getUserByUsername(umsUser.getUsername());
+    	if(modifyCheck(userDb,umsUser)) {
+            iUmsUserService.updateById(umsUser);
+            return ApiResult.success(umsUser);
+    	}else {
+            return ApiResult.success(umsUser,"情報は変更されていません、変更して提出してください。");
+    	}
+    }
+    public boolean modifyCheck(UmsUser userDb,UmsUser umsUser) {
+    	boolean modify = true;
+    	if(userDb.getAlias().equals(umsUser.getAlias()) &&
+    			userDb.getBio().equals(umsUser.getBio()) &&
+    			userDb.getEmail().equals(umsUser.getEmail()) &&
+    			userDb.getMobile().equals(umsUser.getMobile())) {
+    		modify = false;
+    	}
+    	return modify;
     }
 }
