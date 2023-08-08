@@ -2,8 +2,12 @@ package com.douyuehan.doubao.controller;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.douyuehan.doubao.common.api.ApiResult;
+import com.douyuehan.doubao.enumSetting.SettingType;
+import com.douyuehan.doubao.mapper.UmsUserMapper;
 import com.douyuehan.doubao.model.dto.LoginDTO;
 import com.douyuehan.doubao.model.dto.RegisterDTO;
 import com.douyuehan.doubao.model.entity.BmsPost;
@@ -12,6 +16,7 @@ import com.douyuehan.doubao.service.IBmsPostService;
 import com.douyuehan.doubao.service.IUmsUserService;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 import javax.annotation.Resource;
 import javax.validation.Valid;
@@ -28,6 +33,11 @@ public class UmsUserController extends BaseController {
     private IUmsUserService iUmsUserService;
     @Resource
     private IBmsPostService iBmsPostService;
+    
+    @Autowired
+    private UmsUserMapper umsUserMapper;
+    
+	public static String info;
 
     @RequestMapping(value = "/register", method = RequestMethod.POST)
     public ApiResult<Map<String, Object>> register(@Valid @RequestBody RegisterDTO dto) {
@@ -76,22 +86,48 @@ public class UmsUserController extends BaseController {
         return ApiResult.success(map);
     }
     @PostMapping("/update")
-    public ApiResult<UmsUser> updateUser(@RequestBody UmsUser umsUser) {
+    public ApiResult<UmsUser> updateUser(@RequestBody Map<String,UmsUser> settingMap) {
+    	String key = settingMap.keySet().iterator().next();
+    	UmsUser umsUser = settingMap.get(key);
     	UmsUser userDb = iUmsUserService.getUserByUsername(umsUser.getUsername());
-    	if(modifyCheck(userDb,umsUser)) {
-            iUmsUserService.updateById(umsUser);
+		LambdaUpdateWrapper<UmsUser> updateWrapper = Wrappers.lambdaUpdate();
+    	if(modifyCheck(userDb,umsUser,key,updateWrapper)) {
+//            iUmsUserService.updateById(umsUser);
+    		umsUserMapper.update(null, updateWrapper);
             return ApiResult.success(umsUser);
     	}else {
-            return ApiResult.success(umsUser,"情報は変更されていません、変更して提出してください。");
+            return ApiResult.success(umsUser,info+"は変更されていません、変更して提出してください。");
     	}
     }
-    public boolean modifyCheck(UmsUser userDb,UmsUser umsUser) {
+    public boolean modifyCheck(UmsUser userDb,UmsUser umsUser,String key,
+    		LambdaUpdateWrapper<UmsUser> updateWrapper) {
     	boolean modify = true;
-    	if(userDb.getAlias().equals(umsUser.getAlias()) &&
-    			userDb.getBio().equals(umsUser.getBio()) &&
-    			userDb.getEmail().equals(umsUser.getEmail()) &&
-    			userDb.getMobile().equals(umsUser.getMobile())) {
-    		modify = false;
+    	if(key.equals(SettingType.BaseInfo.getSettingForm())) {
+        	if(userDb.getAlias().equals(umsUser.getAlias()) &&
+        			userDb.getBio().equals(umsUser.getBio())) {
+        		modify = false;
+        		info = SettingType.BaseInfo.getSettingName();
+        	}else {
+                updateWrapper.eq(UmsUser::getId, umsUser.getId())
+                             .set(UmsUser::getBio, umsUser.getBio())
+                             .set(UmsUser::getAlias, umsUser.getAlias());
+        	}
+    	}else if(key.equals(SettingType.EmailInfo.getSettingForm())) {
+        	if(userDb.getEmail().equals(umsUser.getEmail())) {
+        		modify = false;
+        		info = SettingType.EmailInfo.getSettingName();
+        	}else {
+                updateWrapper.eq(UmsUser::getId, umsUser.getId())
+                             .set(UmsUser::getEmail, umsUser.getEmail());
+        	}
+    	}else if(key.equals(SettingType.phoneInfo.getSettingForm())) {
+        	if(userDb.getMobile().equals(umsUser.getMobile())) {
+        		modify = false;
+        		info = SettingType.phoneInfo.getSettingName();
+        	}else {
+                updateWrapper.eq(UmsUser::getId, umsUser.getId())
+                .set(UmsUser::getMobile, umsUser.getMobile());
+        	}
     	}
     	return modify;
     }
