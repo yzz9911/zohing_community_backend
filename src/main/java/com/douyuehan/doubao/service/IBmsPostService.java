@@ -28,7 +28,7 @@ public interface IBmsPostService extends IService<BmsPost> {
      * @param principal
      * @return
      */
-    BmsPost create(CreateTopicDTO dto, UmsUser principal);
+    Map<String,BmsPost> create(CreateTopicDTO dto, UmsUser principal);
 
     /**
      * 查看话题详情

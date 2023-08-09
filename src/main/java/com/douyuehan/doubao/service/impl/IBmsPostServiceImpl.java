@@ -57,10 +57,16 @@ public class IBmsPostServiceImpl extends ServiceImpl<BmsTopicMapper, BmsPost> im
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BmsPost create(CreateTopicDTO dto, UmsUser user) {
+    public Map<String,BmsPost> create(CreateTopicDTO dto, UmsUser user) {
         BmsPost topic1 = this.baseMapper.selectOne(new LambdaQueryWrapper<BmsPost>().eq(BmsPost::getTitle, dto.getTitle()));
-        Assert.isNull(topic1, "话题已存在，请修改");
+//        Assert.isNull(topic1, "话题已存在，请修改");
 
+        Map<String,BmsPost> resultInfo = new HashMap<>();
+        if(topic1!=null) {
+        	resultInfo.put("话题已存在，请修改", topic1);
+        	return resultInfo;
+        }
+        
         // 封装
         BmsPost topic = BmsPost.builder()
                 .userId(user.getId())
@@ -82,7 +88,8 @@ public class IBmsPostServiceImpl extends ServiceImpl<BmsTopicMapper, BmsPost> im
             IBmsTopicTagService.createTopicTag(topic.getId(), tags);
         }
 
-        return topic;
+    	resultInfo.put(null, topic);
+    	return resultInfo;
     }
 
     @Override

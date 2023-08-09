@@ -42,8 +42,13 @@ public class BmsPostController extends BaseController {
     public ApiResult<BmsPost> create(@RequestHeader(value = USER_NAME) String userName
             , @RequestBody CreateTopicDTO dto) {
         UmsUser user = umsUserService.getUserByUsername(userName);
-        BmsPost topic = iBmsPostService.create(dto, user);
-        return ApiResult.success(topic);
+//        BmsPost topic = iBmsPostService.create(dto, user);
+        Map<String,BmsPost> createInfo = iBmsPostService.create(dto, user);
+        if(createInfo.containsKey("话题已存在，请修改")) {
+        	return ApiResult.success(createInfo.get("话题已存在，请修改"),"话题已存在，请修改");
+        }else {
+            return ApiResult.success(createInfo.get(null));
+        }
     }
     @GetMapping()
     public ApiResult<Map<String, Object>> view(@RequestParam("id") String id) {
